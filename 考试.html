@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			#all_box{
+				width: 500px;
+				background: #ccc;
+				margin: 0 auto;
+			}
+			#todo_box{
+				background: #333;
+				color: #fff;
+				height: 50px;
+				line-height: 50px;
+			}
+			.done_num,.doing_num{
+				float: right;
+				display: inline-block;
+				width: 30px;
+				height:30px;
+				border-radius:50%;
+				border: 1px solid #fff;
+				text-align: center;
+				line-height: 30px;
+			}
+			#todo{
+				float: right;
+				width: 200px;
+				height: 25px;
+				outline: none;
+				text-indent: 5px;
+				border-radius: 5px;
+				border: 0;
+				margin-top: 10px;
+				margin-right: 10px;
+			}
+			p{
+				height: 30px;
+				line-height: 30px;
+				font-weight: bold;
+			}
+			ul{
+				list-style: none;
+			}
+			.close{
+				width: 30px;
+				height: 30px;
+				border-radius: 50%;
+				border: 0;
+				float: right;
+				background: #666;
+				color: #fff;
+				outline: none;
+				margin-top: 5px;
+			}
+			.doing_ul{
+				
+			}
+			.doing_ul li{
+				width: 480px;
+				margin-left: -30px;
+				height: 40px;
+				line-height: 40px;
+				background: #fff;
+				border-radius: 10px;
+				margin-top: 10px;
+			}
+			.done_ul li{
+				width: 480px;
+				margin-left: -30px;
+				height: 40px;
+				line-height: 40px;
+				background: #999;
+				border-radius: 10px;
+				margin-top: 10px;
+			}
+		</style>
+		
+	</head>
+	<body>
+		<div id="all_box">
+			<div id="todo_box">
+				TodoList
+				<input type="text" placeholder="添加Todo" id="todo"/>
+			</div>
+			<div id="doing">
+				<p>正在进行    <span class="doing_num">0</span></p>
+				<ul class="doing_ul">
+					
+				</ul>
+			</div>
+			<div id="done">
+				<p>已经完成    <span class="done_num">0</span></p>
+				<ul class="done_ul">
+					
+				</ul>
+			</div>
+		</div>
+	</body>
+	<script type="text/javascript" src="jquery-3.2.1.min.js"></script>
+	<script type="text/javascript">
+		var sum=0; //这是用来装正在进行的cookie的name
+		var done_sun=100000; //这是用来装已完成的cookie的name
+		//页面加载的时候，检查有没cookie 有就创建li 
+		window.onload=function(){
+			var arr_cookie=document.cookie;			
+			arr_cookie=arr_cookie.split("; ")
+			//判断cookie是否为空；
+			if(arr_cookie[0]!=""){
+				for(var i=0;i<arr_cookie.length;i++){
+				var split_cookie=arr_cookie[i].split("=")
+				console.log(split_cookie)
+				
+				// 判断有没有已完成的cookie
+				if(split_cookie[0]>100000){
+					//把值给done_sun是避免done_sun的值和下面的一样  这样cookie会被覆盖掉
+					done_sun=split_cookie[0];
+					//创建li
+					$("<li><input type='checkbox' class='check'><span>"+split_cookie[1]+"</span><button class='close'>—</button></li>").appendTo(".done_ul");
+					$('.done_num').html($(".done_ul li").length)  //改变右边数目
+					$(".done_ul .check").prop("checked",true)  //改变checkbox 的状态
+				}else{
+					if(split_cookie[0]<100000){
+						//把值给sum是避免sum的值和下面的一样  这样cookie会被覆盖掉
+						sum=split_cookie[0];
+						//创建li
+						$("<li><input type='checkbox' class='check'><span>"+split_cookie[1]+"</span><button class='close'>—</button></li>").appendTo(".doing_ul")
+						//改变右边数目
+						$('.doing_num').html($(".doing_ul li").length)
+						}
+					}
+				}	
+			}			
+		}		
+		$('#todo').keyup(function(){
+			//回车键创建li 			
+			if(event.keyCode==13){
+				if($('#todo').val()!=""){
+				//用sum 来保存 cookie 这样名字不会重复
+				sum++;
+				document.cookie=sum+"="+$("#todo").val()
+				
+				//创建li
+				$("<li><input type='checkbox' class='check'><span>"+$("#todo").val()+"</span><button class='close'>—</button></li>").appendTo(".doing_ul")
+				//改变右边数目
+				$('.doing_num').html($(".doing_ul li").length)
+				}
+			}
+		})
+		
+		//点击正在进行的checkbox按钮的时候
+		$(".doing_ul").on('click','.check',function(){
+			//删除对应的li
+			$(this).parent().remove();
+			//下面完成的ul 创建 li 内容一样
+			$("<li>"+$(this).parent().html()+"</li>").appendTo(".done_ul")
+			$('.done_ul .check').prop("checked",true);
+			//改变右边的数目
+			$('.done_num').html($(".done_ul li").length);
+			$('.doing_num').html($(".doing_ul li").length)
+			//把对应的cookie 删除
+			var arrcookie=document.cookie;
+			arrcookie=arrcookie.split("; ")		
+			for(var i=0;i<arrcookie.length;i++){
+				var split_cookie=arrcookie[i].split("=")
+					if(split_cookie[1]==$(this).parent().children("span").html()){
+						var d=new Date()
+						d.setDate(d.getDate()-1)
+						document.cookie=split_cookie[0]+"=del.path=/;expires="+d;
+					}				
+			}
+			//设定新的cookie 把它存到已完成的cookie中；
+			done_sun++;
+			document.cookie=done_sun+"="+$(this).parent().children("span").html()
+			 
+		})
+		//点击已完成的checkbox按钮的时候
+		$(".done_ul").on('click','.check',function(){
+			//删除对应的li
+			$(this).parent().remove();
+			//下面完成的ul 创建 li 内容一样
+			$("<li>"+$(this).parent().html()+"</li>").appendTo(".doing_ul")
+			$('.doing_ul .check').prop("checked",false);
+			//改变右边的数目
+			$('.done_num').html($(".done_ul li").length);
+			$('.doing_num').html($(".doing_ul li").length)
+			//把对应的cookie 删除
+			var arrcookie=document.cookie;
+			arrcookie=arrcookie.split("; ")		
+			for(var i=0;i<arrcookie.length;i++){
+				var split_cookie=arrcookie[i].split("=")
+					if(split_cookie[1]==$(this).parent().children("span").html()){
+						var d=new Date()
+						d.setDate(d.getDate()-1)
+						document.cookie=split_cookie[0]+"=del.path=/;expires="+d;
+					}				
+			}
+			//设定新的cookie 把它存到正在进行的cookie中
+			sum++;
+			document.cookie=sum+"="+$(this).parent().children("span").html()
+			 
+		})
+		
+		//点击已完成的关闭按钮
+		$(".done_ul").on('click','.close',function(){
+			//删除所在行的li
+			$(this).parent().remove();
+			//改变右边数目
+			$('.done_num').html($(".done_ul li").length);
+			
+			//删除cookie
+			var arrcookie=document.cookie;
+			arrcookie=arrcookie.split("; ")		
+			for(var i=0;i<arrcookie.length;i++){
+				var split_cookie=arrcookie[i].split("=")
+					if(split_cookie[1]==$(this).parent().children("span").html()){
+						var d=new Date()
+						d.setDate(d.getDate()-1)
+						document.cookie=split_cookie[0]+"=del.path=/;expires="+d;
+					}				
+			}
+		})
+		//点击正在进行的关闭按钮
+		$(".doing_ul").on('click','.close',function(){
+			$(this).parent().remove();
+			$('.doing_num').html($(".doing_ul li").length)
+			var arrcookie=document.cookie;
+			arrcookie=arrcookie.split("; ")		
+			for(var i=0;i<arrcookie.length;i++){
+				var split_cookie=arrcookie[i].split("=")
+					if(split_cookie[1]==$(this).parent().children("span").html()){
+						var d=new Date()
+						d.setDate(d.getDate()-1)
+						document.cookie=split_cookie[0]+"=del.path=/;expires="+d;
+				}				
+			}
+		})
+	</script>
+	
+</html>
